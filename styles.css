@@ -65,6 +65,21 @@ body {
 .tagline { margin: 2px 0 0; opacity: .85; font-size: 13px; }
 .updated { font-size: 12px; opacity: .9; background: rgba(255,255,255,.15); padding: 6px 12px; border-radius: 999px; }
 
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.side-toggle { display: inline-flex; background: rgba(255,255,255,.18); border-radius: 999px; padding: 3px; gap: 2px; }
+.side-btn {
+  appearance: none; border: none; background: none; color: #fff; cursor: pointer;
+  font-family: var(--font-display); text-transform: uppercase; letter-spacing: .03em;
+  font-size: 13px; font-weight: 600; padding: 6px 18px; border-radius: 999px;
+  transition: background .15s, color .15s;
+}
+.side-btn[aria-pressed="true"] { background: #fff; color: var(--red); }
+.side-btn:not([aria-pressed="true"]):hover { background: rgba(255,255,255,.15); }
+
+@media (max-width: 560px) {
+  .header-right { flex-direction: row-reverse; align-items: center; flex-wrap: wrap; }
+}
+
 .tabs {
   display: flex;
   gap: 4px;
