@@ -80,6 +80,14 @@ body {
   .header-right { flex-direction: row-reverse; align-items: center; flex-wrap: wrap; }
 }
 
+/* Trophy cabinet — lit = won this season, shadow = not (yet) */
+.trophies { display: flex; gap: 14px; margin-top: 14px; align-items: flex-end; }
+.trophies:empty { display: none; }
+.trophy { width: 30px; height: 40px; display: block; }
+.trophy svg { width: 100%; height: 100%; display: block; fill: currentColor; overflow: visible; }
+.trophy.shadow { color: rgba(0, 0, 0, .32); }
+.trophy.lit { color: #ffcf3f; filter: drop-shadow(0 0 7px rgba(255, 207, 63, .9)); }
+
 .tabs {
   display: flex;
   gap: 4px;

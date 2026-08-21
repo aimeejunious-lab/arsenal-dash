@@ -406,6 +406,53 @@ function renderTabs() {
   });
 }
 
+// Trophy cabinet (men's side). Generic, stylised cup/shield silhouettes — not
+// replicas of the actual trademarked trophies. `won` lights it gold; otherwise
+// it renders as a dark shadow. (Can be made data-driven later once completed
+// results are pulled in and final wins can be detected.)
+const TROPHIES = [
+  {
+    name: "Community Shield",
+    won: true,
+    // a shield
+    svg: `<svg viewBox="0 0 64 84"><path d="M32 8 L54 16 V38 C54 55 44 66 32 73 C20 66 10 55 10 38 V16 Z"/><path d="M32 16 L47 21 V38 C47 51 40 59 32 65 C24 59 17 51 17 38 V21 Z" fill="none" stroke="currentColor" stroke-width="2" opacity=".45"/></svg>`,
+  },
+  {
+    name: "FA Cup",
+    won: false,
+    // lidded cup with a figure/knob on top
+    svg: `<svg viewBox="0 0 64 84"><circle cx="32" cy="7" r="3.2"/><rect x="30" y="9" width="4" height="4"/><path d="M22 22 C22 12 42 12 42 22 Z"/><path d="M23 24 H41 C41 36 37 45 32 47 C27 45 23 36 23 24 Z"/><path d="M23 27 C14 27 14 37 23 36" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M41 27 C50 27 50 37 41 36" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><rect x="29" y="47" width="6" height="8"/><rect x="23" y="55" width="18" height="4" rx="1"/><rect x="18" y="59" width="28" height="5" rx="2"/></svg>`,
+  },
+  {
+    name: "Carabao Cup",
+    won: false,
+    // slim cup with tall looping handles
+    svg: `<svg viewBox="0 0 64 84"><path d="M25 16 H39 C39 36 36 47 32 49 C28 47 25 36 25 16 Z"/><path d="M25 19 C12 15 14 40 26 38" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><path d="M39 19 C52 15 50 40 38 38" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><rect x="29" y="49" width="6" height="8"/><rect x="23" y="57" width="18" height="4" rx="1"/><rect x="18" y="61" width="28" height="4" rx="2"/></svg>`,
+  },
+  {
+    name: "Premier League",
+    won: false,
+    // crowned cup
+    svg: `<svg viewBox="0 0 64 84"><path d="M20 22 L23 9 L28 16 L32 7 L36 16 L41 9 L44 22 Z"/><path d="M22 24 H42 C42 37 38 46 32 48 C26 46 22 37 22 24 Z"/><path d="M22 27 C13 27 13 38 22 37" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M42 27 C51 27 51 38 42 37" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><rect x="29" y="48" width="6" height="8"/><rect x="23" y="56" width="18" height="4" rx="1"/><rect x="18" y="60" width="28" height="5" rx="2"/></svg>`,
+  },
+  {
+    name: "Champions League",
+    won: false,
+    // tall cup with big "ears" handles
+    svg: `<svg viewBox="0 0 64 84"><path d="M22 16 H42 C42 34 38 46 32 48 C26 46 22 34 22 16 Z"/><path d="M22 18 C4 14 4 44 22 40" fill="none" stroke="currentColor" stroke-width="4"/><path d="M42 18 C60 14 60 44 42 40" fill="none" stroke="currentColor" stroke-width="4"/><rect x="29" y="48" width="6" height="8"/><rect x="22" y="56" width="20" height="4" rx="1"/><rect x="17" y="60" width="30" height="5" rx="2"/></svg>`,
+  },
+];
+
+function renderTrophies() {
+  const el = document.getElementById("trophies");
+  if (!el) return;
+  if (state.side !== "men") { el.innerHTML = ""; return; } // men's cabinet only
+  el.innerHTML = TROPHIES.map(
+    (t) =>
+      `<span class="trophy ${t.won ? "lit" : "shadow"}" title="${t.name}${t.won ? " — won 🏆" : ""}" role="img" aria-label="${t.name}${t.won ? ", won" : ", not yet won"}">${t.svg}</span>`
+  ).join("");
+}
+
 function renderSideToggle() {
   const el = document.getElementById("sideToggle");
   if (!el) return;
@@ -451,6 +498,7 @@ async function selectSide(sideKey) {
   }
 
   updated.textContent = `updated ${new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}`;
+  renderTrophies();
   renderTabs();
   renderActive();
   window.scrollTo({ top: 0, behavior: "smooth" });
