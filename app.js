@@ -205,6 +205,17 @@ function competitionsWithData() {
 function arsenalRow() {
   return cur().standings.find((r) => r.isArsenal) || null;
 }
+// Matchweek = league games played + 1 (the current/upcoming round). Total
+// matchweeks derived from the table size: a double round-robin is 2*(teams-1).
+function matchweekInfo() {
+  const ars = arsenalRow();
+  if (!ars) return null;
+  const teams = cur().standings.length;
+  const total = teams ? (teams - 1) * 2 : null;
+  let number = (ars.played || 0) + 1;
+  if (total && number > total) number = total;
+  return { number, total };
+}
 function record(matches) {
   const r = { W: 0, D: 0, L: 0 };
   matches.forEach((m) => {
@@ -265,6 +276,14 @@ function renderSummary() {
 
   const cards = [];
 
+  const mw = matchweekInfo();
+  cards.push(`
+    <div class="stat-card">
+      <h3>Matchweek</h3>
+      <div class="stat-big">${mw ? mw.number : "—"}</div>
+      <div class="stat-sub">${mw && mw.total ? `of ${mw.total} · ${league}` : league}</div>
+    </div>`);
+
   cards.push(`
     <div class="stat-card">
       <h3>Next match</h3>
@@ -323,11 +342,18 @@ function renderSummary() {
 }
 
 function renderCompetition(name) {
+  const comp = sideCfg().competitions.find((c) => c.name === name);
   const ms = cur().matches.filter((m) => m.competition === name);
   const upcoming = ms.filter((m) => !m.completed).sort(byDateAsc);
   const past = ms.filter((m) => m.completed).sort(byDateDesc);
 
   let html = "";
+  if (comp && comp.hasTable) {
+    const mw = matchweekInfo();
+    if (mw) {
+      html += `<div class="matchweek-banner">Matchweek <strong>${mw.number}</strong>${mw.total ? ` <span>of ${mw.total}</span>` : ""}</div>`;
+    }
+  }
   html += `<div class="section-title">Fixtures <span class="count">${upcoming.length}</span></div>`;
   html += upcoming.length ? upcoming.map(matchCard).join("") : `<div class="empty">No upcoming fixtures.</div>`;
   html += `<div class="section-title">Results <span class="count">${past.length}</span></div>`;

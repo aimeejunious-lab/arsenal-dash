@@ -88,6 +88,16 @@ body {
 .trophy.shadow { color: rgba(0, 0, 0, .32); }
 .trophy.lit { color: #ffcf3f; filter: drop-shadow(0 0 7px rgba(255, 207, 63, .9)); }
 
+.matchweek-banner {
+  display: inline-flex; align-items: baseline; gap: 7px;
+  font-family: var(--font-display); text-transform: uppercase; letter-spacing: .02em;
+  color: var(--ink); background: var(--card); border: 1px solid var(--line);
+  box-shadow: var(--shadow); border-radius: 999px; padding: 9px 18px;
+  font-size: 15px; margin: 4px 0 10px;
+}
+.matchweek-banner strong { color: var(--red); font-size: 20px; }
+.matchweek-banner span { color: var(--muted); font-weight: 600; }
+
 .tabs {
   display: flex;
   gap: 4px;
