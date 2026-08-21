@@ -98,6 +98,11 @@ body {
 .matchweek-banner strong { color: var(--red); font-size: 20px; }
 .matchweek-banner span { color: var(--muted); font-weight: 600; }
 
+/* league tabs: fixtures & results side by side */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px; align-items: start; }
+.two-col .col .section-title:first-child { margin-top: 6px; }
+@media (max-width: 720px) { .two-col { grid-template-columns: 1fr; gap: 0; } }
+
 .tabs {
   display: flex;
   gap: 4px;

@@ -347,17 +347,38 @@ function renderCompetition(name) {
   const upcoming = ms.filter((m) => !m.completed).sort(byDateAsc);
   const past = ms.filter((m) => m.completed).sort(byDateDesc);
 
+  const fixturesHtml = upcoming.length
+    ? upcoming.map(matchCard).join("")
+    : `<div class="empty">No upcoming fixtures.</div>`;
+  const resultsHtml = past.length
+    ? past.map(matchCard).join("")
+    : `<div class="empty">No results yet.</div>`;
+
   let html = "";
   if (comp && comp.hasTable) {
+    // league tabs (PL / WSL): matchweek banner + fixtures & results side by side
     const mw = matchweekInfo();
     if (mw) {
       html += `<div class="matchweek-banner">Matchweek <strong>${mw.number}</strong>${mw.total ? ` <span>of ${mw.total}</span>` : ""}</div>`;
     }
+    html += `
+      <div class="two-col">
+        <div class="col">
+          <div class="section-title">Fixtures <span class="count">${upcoming.length}</span></div>
+          ${fixturesHtml}
+        </div>
+        <div class="col">
+          <div class="section-title">Results <span class="count">${past.length}</span></div>
+          ${resultsHtml}
+        </div>
+      </div>`;
+  } else {
+    // cup / European tabs: keep the stacked layout
+    html += `<div class="section-title">Fixtures <span class="count">${upcoming.length}</span></div>`;
+    html += fixturesHtml;
+    html += `<div class="section-title">Results <span class="count">${past.length}</span></div>`;
+    html += resultsHtml;
   }
-  html += `<div class="section-title">Fixtures <span class="count">${upcoming.length}</span></div>`;
-  html += upcoming.length ? upcoming.map(matchCard).join("") : `<div class="empty">No upcoming fixtures.</div>`;
-  html += `<div class="section-title">Results <span class="count">${past.length}</span></div>`;
-  html += past.length ? past.map(matchCard).join("") : `<div class="empty">No results yet.</div>`;
   return html;
 }
 
