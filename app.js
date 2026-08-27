@@ -352,7 +352,7 @@ function renderSummary() {
     <div class="stat-card">
       <h3>Last result</h3>
       ${last
-        ? `<div class="stat-big"><span class="result-tag ${last.result}">${last.result}</span> ${last.us.score}–${last.opp.score}</div>
+        ? `<div class="stat-big result-line"><span class="result-tag ${last.result}">${last.result}</span><span>${last.us.score}–${last.opp.score}</span></div>
            <div class="stat-sub">${last.isHome ? "vs" : "at"} ${last.opp.name} · ${last.short}</div>`
         : `<div class="stat-big">—</div><div class="stat-sub">No results yet</div>`}
     </div>`);
