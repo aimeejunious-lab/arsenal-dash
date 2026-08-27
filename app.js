@@ -61,6 +61,24 @@ function logoFor(team) {
   return team.id ? `https://a.espncdn.com/i/teamlogos/soccer/500/${team.id}.png` : "";
 }
 
+// A competitor's score is a plain string/number in the upcoming view, but an
+// object like { value: 3, displayValue: "3", winner: true } in the results view.
+function parseScore(s) {
+  if (s == null || s === "") return null;
+  if (typeof s === "object") {
+    const v = s.value != null ? s.value : s.displayValue;
+    const n = Number(v);
+    return isNaN(n) ? null : n;
+  }
+  const n = Number(s);
+  return isNaN(n) ? null : n;
+}
+function isWinner(competitor) {
+  if (competitor.winner === true) return true;
+  if (competitor.score && typeof competitor.score === "object" && competitor.score.winner === true) return true;
+  return false;
+}
+
 function normalizeEvent(ev, comp, teamId) {
   const c = (ev.competitions && ev.competitions[0]) || {};
   const type = (c.status && c.status.type) || {};
@@ -71,13 +89,13 @@ function normalizeEvent(ev, comp, teamId) {
   if (!us || !opp) return null;
 
   const isHome = us.homeAway === "home";
-  const usScore = us.score != null && us.score !== "" ? Number(us.score) : null;
-  const oppScore = opp.score != null && opp.score !== "" ? Number(opp.score) : null;
+  const usScore = parseScore(us.score);
+  const oppScore = parseScore(opp.score);
 
   let result = null;
   if (completed) {
-    if (us.winner) result = "W";
-    else if (opp.winner) result = "L";
+    if (isWinner(us)) result = "W";
+    else if (isWinner(opp)) result = "L";
     else result = "D";
   }
 
@@ -97,20 +115,50 @@ function normalizeEvent(ev, comp, teamId) {
   };
 }
 
-async function fetchCompetition(comp, teamId) {
-  try {
-    const url = `${API}/${comp.code}/teams/${teamId}/schedule?fixture=true`;
-    const res = await fetch(url);
-    if (!res.ok) return { comp, events: [], season: "" };
-    const data = await res.json();
-    const season = (data.season && data.season.displayName) || "";
-    const events = (data.events || [])
-      .map((ev) => normalizeEvent(ev, comp, teamId))
-      .filter(Boolean);
-    return { comp, events, season };
-  } catch (e) {
-    return { comp, events: [], season: "" };
+async function fetchCompetition(comp, teamId, seasonYear) {
+  // ESPN splits a team's schedule into two views:
+  //   ?fixture=true  -> upcoming (not-yet-played) fixtures
+  //   ?season=YYYY   -> completed/in-progress results for that season
+  // We fetch both and merge, or a match vanishes the moment it's played.
+  // `seasonYear` (the side's current season) scopes the results view AND is
+  // used to strictly filter out last season's matches, which some cup/European
+  // endpoints return when there are no fixtures for the new season yet.
+  const base = `${API}/${comp.code}/teams/${teamId}/schedule`;
+
+  async function grab(url) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return { events: [], year: null, season: "" };
+      const data = await res.json();
+      return {
+        events: data.events || [],
+        year: (data.season && data.season.year) || null,
+        season: (data.season && data.season.displayName) || "",
+      };
+    } catch (e) {
+      return { events: [], year: null, season: "" };
+    }
   }
+
+  const up = await grab(`${base}?fixture=true`);
+  const year = seasonYear || up.year;
+  // only pull completed results if we know the season — never fall back to the
+  // unscoped view, which leaks last season's matches
+  const done = year ? await grab(`${base}?season=${year}`) : { events: [], season: "" };
+  const season = up.season || done.season || "";
+
+  // merge & de-dupe by id; results win on duplicates (they carry final scores)
+  const byId = new Map();
+  up.events.forEach((ev) => byId.set(ev.id, ev));
+  done.events.forEach((ev) => {
+    // strict: keep a completed match only if it belongs to the current season
+    if (year && ev.season && ev.season.year === year) byId.set(ev.id, ev);
+  });
+
+  const events = Array.from(byId.values())
+    .map((ev) => normalizeEvent(ev, comp, teamId))
+    .filter(Boolean);
+  return { comp, events, season };
 }
 
 async function fetchStandings(standingsCode, seasonYear, teamId) {
@@ -147,17 +195,24 @@ async function fetchStandings(standingsCode, seasonYear, teamId) {
 async function loadData(sideKey) {
   const side = SIDES[sideKey];
   const cacheKey = `${CACHE_KEY}-${sideKey}`;
-  const results = await Promise.all(side.competitions.map((c) => fetchCompetition(c, side.teamId)));
+
+  // Determine the current season year once, from the league competition (which
+  // reliably reports it), then apply it to every competition so cup/European
+  // tabs can't leak last season's results.
+  const leagueComp = side.competitions.find((c) => c.hasTable) || side.competitions[0];
+  let seasonYear = null;
+  let season = "";
+  try {
+    const probe = await (await fetch(`${API}/${leagueComp.code}/teams/${side.teamId}/schedule?fixture=true`)).json();
+    seasonYear = (probe.season && probe.season.year) || null;
+    season = (probe.season && probe.season.displayName) || "";
+  } catch (e) {}
+
+  const results = await Promise.all(side.competitions.map((c) => fetchCompetition(c, side.teamId, seasonYear)));
 
   const matches = [];
-  let season = "";
-  let seasonYear = "";
   results.forEach((r) => {
-    if (r.comp.hasTable && r.season) {
-      season = r.season;
-      const m = r.season.match(/(\d{4})/);
-      if (m) seasonYear = m[1];
-    }
+    if (!season && r.season) season = r.season;
     matches.push(...r.events);
   });
 
